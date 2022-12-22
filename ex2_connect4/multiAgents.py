@@ -133,11 +133,11 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return best_value, best_action
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
+    """
+    Your minimax agent with alpha-beta pruning (question 2)
+    """
     def getAction(self, gameState):
-        """
-        Your minimax agent with alpha-beta pruning (question 2)
-        *** YOUR CODE HERE ***
-        """
+
         gameState.switch_turn(gameState.turn)
         # Calling to the alphabeta function and getting the preferred column for our move.
         # Initialized the variables ( True for the AI, False for the Player)
@@ -177,6 +177,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                     best_score = new_score
                     best_action = action
                 # Changes need to be done for this algorithm
+                # We are checking the son of a current node s.t if beta <= alpha there
+                # were a better option for the node to chose, so we don't need to keep doing the recursive calls (break)
                 alpha = max(alpha, best_score)
                 if beta <= alpha:
                     break
@@ -193,7 +195,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 if value < best_score:
                     best_score = value
                     best_action = action
-                # changes need to be done for this algorithm
+                # Changes need to be done for this algorithm
                 beta = min(beta, best_score)
                 if beta <= alpha:
                     break
@@ -207,10 +209,6 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     """
 
     def getAction(self, gameState):
-        """
-        Returns the expectimax action using self.depth and self.evaluationFunction
-        """
-        "*** YOUR CODE HERE ***"
         gameState.switch_turn(gameState.turn)
         # Calling to the expectimax function and getting the preferred column for our move.
         # Initialized the variables ( True for the AI, False for the Player)
@@ -223,7 +221,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         gameState.switch_turn(gameState.turn)
         # Initialized the variable
         best_action = None
-        # We go over all the actions and taking just the legal actions possible
+        # Iterate through the actions and taking just the possible legal actions
         # Meaning taking the columns we can drop the piece (legal_actions will be list of possible columns)
         # Will make the code more readable
         legal_actions = gameState.getLegalActions(self.index)
@@ -234,30 +232,33 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         if depth == 0 or gameState.is_terminal():
             return self.evaluationFunction(gameState), None
 
-        # If the current player is the maximizing player, iterate through the legal actions and update the best value and action if necessary
         if maximizing_player:
             best_score = -math.inf
             for action in legal_actions:
-                # Generate the successor game state and get its value
+                # game_state_successor will be what state we will be after taking an action
                 game_state_successor = gameState.generateSuccessor(self.index, action)
+                # We want only the score variable, so we need the column zero
+                # False for switching turns while we're doing the recursive calls
                 score = self.expectimax(game_state_successor, depth - 1, False)[0]
+                # If the new state ( aka game_state_successor) gave us new score that re better than the current score
+                # we take the new score to be the current score s.t it will become the best score
+                # The best action will be the one that gave us the best score
                 if score > best_score:
                     best_score = score
                     best_action = action
             return best_score, best_action
 
-        # If the current player is the minimizing player, compute the expected value of the legal actions
+        # The changes to make this algorithm are here
+        # We now compute the best score by the average of all the sons
+        # we will do the best action depending on the score.
         else:
-            # Initialize a variable to store the sum of the values of the legal actions
+            # Initialize a variable to save the sum of the scores of the legal actions
             sum_score = 0
-            # Iterate through the legal actions and add their values to the value sum
             for action in legal_actions:
-                # Generate the successor game state and get its value
                 game_state_successor = gameState.generateSuccessor(self.index, action)
                 score = self.expectimax(game_state_successor, depth - 1, True)[0]
                 sum_score += score
-            # Compute the expected value by dividing the value sum by the number of legal actions
-            expected_score = sum_score / len(legal_actions)
-            best_score = expected_score
-            # Return the best value and action for the current player
+            # Compute the average score by dividing the sum of the scores by the number of legal actions
+            avg_score = sum_score / len(legal_actions)
+            best_score = avg_score
             return best_score, best_action
