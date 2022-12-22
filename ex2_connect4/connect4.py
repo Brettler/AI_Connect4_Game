@@ -376,8 +376,8 @@ if __name__ == '__main__':
 
     graphicMode = True
     gameMode  = 1
-    depth = 3 # must be at least 3 with different agent then Random
-    type = "BestRandom"
+    depth = 4 # must be at least 3 with different agent then Random
+    type = "AlphaBetaAgent"
 
     agent = None
     if gameMode  == 1:

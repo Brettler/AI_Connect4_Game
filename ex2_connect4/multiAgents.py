@@ -13,14 +13,8 @@ Student ID: 318517182
 # http://ai.berkeley.edu.
 # We thank them for that! :)
 
-
 import random, util, math
-
-import numpy as np
-
 from connect4 import Agent
-from ex2_connect4.gameUtil import PLAYER, AI, AI_PIECE, PLAYER_PIECE
-
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -42,8 +36,8 @@ class MultiAgentSearchAgent(Agent):
     only partially specified, and designed to be extended.  Agent is another abstract class.
     """
 
-    def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
-        self.index = 1 # agent is always index 1
+    def __init__(self, evalFn = 'scoreEvaluationFunction', depth='2'):
+        self.index = 1  # agent is always index 1
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
@@ -82,188 +76,129 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Return whether or not that state is terminal
 
         *** YOUR CODE HERE ***
-
-                Returns the minimax action from the current gameState using self.depth
-        and self.evaluationFunction.
-
-        # Call the minimax function with the initial game state, the desired depth, and a boolean indicating
-        # whether the current player is the maximizing player or the minimizing player
-
-        *** YOUR CODE HERE ***
         """
         gameState.switch_turn(gameState.turn)
-        _, action = self.minimax(gameState, self.depth, True)
-        return action
+        # Calling to the minimax function and getting the preferred column for our move.
+        # Initialized the variables ( True for the AI, False for the Player)
+        _, best_action = self.minimax(gameState, self.depth, True)
+        return best_action
 
+    # Implementing the minimax algorithm
     def minimax(self, gameState, depth, maximizing_player):
-        """
-        The minimax function that implements the minimax algorithm.
-        """
         gameState.switch_turn(gameState.turn)
-        # If the game state is terminal or the depth has been reached, return the value of the terminal state
-        if gameState.is_terminal() or depth == 0:
-            return self.evaluationFunction(gameState), None
-
+        # Initialized the variable
         best_action = None
+        # Iterate through the actions and taking just the possible legal actions
+        # Meaning taking the columns we can drop the piece (legal_actions will be list of possible columns)
+        # Will make the code more readable
+        legal_actions = gameState.getLegalActions(self.index)
+
+        # Terminal state is when someone won\lost or when there is no legal actions to take
+        # depth 0 we finished the calls
+        # return the state ( we also need to return none cuz we are dealing with 2d structure)
+        if depth == 0 or gameState.is_terminal():
+            return self.evaluationFunction(gameState), None
+        # If we want to maximize the player we will Initialize best score to be minus infinity s.t every score
+        # we will be available will be better than the Initialized score.
         if maximizing_player:
-            # we need to inizailed the varaible before using it
-            value = np.NINF
-            for action in gameState.getLegalActions(self.index):
-                successor_game_state = gameState.generateSuccessor(self.index, action)
-                # we want only the score, so we need the column zero
-                new_score = self.minimax(successor_game_state, depth - 1, False)[0]
-                if new_score > value:
-                    value = new_score
-                    # best action is which column we will drop our piece
-                    best_action = action
-                # first colum will be the score, the second is the column we will put the piece
-            return value, best_action
-
-        else: # we are minimzing player
-            value = np.inf
-            for action in gameState.getLegalActions(self.index):
-                successor_game_state = gameState.generateSuccessor(self.index, action)
-                new_score = self.minimax(successor_game_state, depth - 1, True)[0]
-                if new_score < value:
-                    value = new_score
-                    best_action = action
-            return value, best_action
-
-        """
-        # If the game state is terminal or the depth has been reached, return the value of the terminal state
-        if gameState.is_terminal() or depth == 0:
-            return self.evaluationFunction(gameState), None
-        # Initialize variables to store the best value and action for the current player
-        bestValue = np.NINF if maximizingPlayer else np.inf
-        best_action = None
-
-        # Iterate through the legal actions for the current player
-        for action in gameState.getLegalActions(self.index):
-            # Generate the successor game state and get its value
-            # gameState.switch_turn(AI_PIECE)
-            successorGameState = gameState.generateSuccessor(self.index, action)
-            # gameState.switch_turn(PLAYER_PIECE)
-            value = self.minimax(successorGameState, depth - 1, not maximizingPlayer)[0]
-
-            # Update the best value and action if necessary
-            if maximizingPlayer:
-                if value > bestValue:
-                    bestValue = value
-                    best_action = action
-            else:
-                if value < bestValue:
-                    bestValue = value
+            best_score = -math.inf
+            for action in legal_actions:
+                # game_state_successor will be what state we will be after taking an action
+                game_state_successor = gameState.generateSuccessor(self.index, action)
+                # We want only the score variable, so we need the column zero
+                # False for switching turns while we're doing the recursive calls
+                new_score = self.minimax(game_state_successor, depth - 1, False)[0]
+                # If the new state ( aka game_state_successor) gave us new score that re better than the current score
+                # we take the new score to be the current score s.t it will become the best score
+                # we want max score
+                if new_score > best_score:
+                    best_score = new_score
+                    # Best action is which column we will drop our piece
                     best_action = action
 
-        # Return the best value and action for the current player
-        return bestValue, best_action
-        """
+            # First colum will be the score, the second is the column we will put the piece
+            return best_score, best_action
 
+        # The same as explained in "if maximizing_player:" just the opposite
+        # we want to minimize the player, so we will want the new score to be lower than the current score extra...
+        else:
+            best_value = math.inf
+            for action in legal_actions:
+                game_state_successor = gameState.generateSuccessor(self.index, action)
+                new_score = self.minimax(game_state_successor, depth - 1, True)[0]
+                if new_score < best_value:
+                    best_value = new_score
+                    best_action = action
+
+            return best_value, best_action
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     def getAction(self, gameState):
         """
-            Your minimax agent with alpha-beta pruning (question 2)
+        Your minimax agent with alpha-beta pruning (question 2)
+        *** YOUR CODE HERE ***
         """
-        "*** YOUR CODE HERE ***"
-        """
-        Returns the minimax action from the current gameState using self.depth
-        and self.evaluationFunction.
-        """
-        # Call the alphabeta function with the initial game state, the desired depth, and the initial alpha and beta values
         gameState.switch_turn(gameState.turn)
-        _, action = self.alphabeta(gameState, self.depth, np.NINF, np.inf, True)
-        return action
+        # Calling to the alphabeta function and getting the preferred column for our move.
+        # Initialized the variables ( True for the AI, False for the Player)
+        # We need also to initialized -math.inf, math.inf for alpha, beta accordingly for this algorithm
+        _, best_action = self.alphabeta(gameState, self.depth, -math.inf, math.inf, True)
+        return best_action
 
+    # Implementing the alphabeta algorithm
     def alphabeta(self, gameState, depth, alpha, beta, maximizing_player):
-        """
-        The alphabeta function that implements the alpha-beta search algorithm.
-        """
-        # If the game state is terminal or the depth has been reached, return the value of the terminal state
         gameState.switch_turn(gameState.turn)
-        if gameState.is_terminal() or depth == 0:
+        # Initialized the variable
+        best_action = None
+        # Iterate through the actions and taking just the possible legal actions
+        # Meaning taking the columns we can drop the piece (legal_actions will be list of possible columns)
+        # Will make the code more readable
+        legal_actions = gameState.getLegalActions(self.index)
+
+        # Terminal state is when someone won\lost or when there is no legal actions to take
+        # depth 0 we finished the calls
+        # return the state ( we also need to return none cuz we are dealing with 2d structure)
+        if depth == 0 or gameState.is_terminal():
             return self.evaluationFunction(gameState), None
-        """
-        # Initialize variables to store the best value and action for the current player
-        best_value = np.NINF if maximizing_player else np.inf
-        best_action = None
-        
 
-        # Iterate through the legal actions for the current player
-        for action in gameState.getLegalActions(self.index):
-            # Generate the successor game state and get its value
-            successorGameState = gameState.generateSuccessor(self.index, action)
-            value = self.alphabeta(successorGameState, depth - 1, alpha, beta, not maximizing_player)[0]
-
-            # Update the best value and action if necessary
-            if maximizing_player:
-                if value > best_value:
-                    best_value = value
-                    best_action = action
-                alpha = max(alpha, best_value)
-                if beta <= alpha:
-                    break
-            else:
-                if value < best_value:
-                    best_value = value
-                    best_action = action
-                beta = min(beta, best_value)
-                if beta <= alpha:
-                    break
-
-        # Return the best value and action for the current player
-        return best_value, best_action
-"""
-
-        # Initialize variables to store the best value and action for the current player
-        best_action = None
-
-
+        # The same as we explain in the minmax algorithm however this time we save time by checking not develop
+        # forwards in the tree if we want to maximize the player and beta <= alpha.
+        # Also, we will take the maximum score every time and set it for alpha
         if maximizing_player:
-            best_value = np.NINF
-            # Iterate through the legal actions for the current player
-            for action in gameState.getLegalActions(self.index):
-                # Generate the successor game state and get its value
-                successorGameState = gameState.generateSuccessor(self.index, action)
-                value = self.alphabeta(successorGameState, depth - 1, alpha, beta, not maximizing_player)[0]
-                if value > best_value:
-                    best_value = value
+            best_score = -math.inf
+            for action in legal_actions:
+                # game_state_successor will be what state we will be after taking an action
+                game_state_successor = gameState.generateSuccessor(self.index, action)
+                # We want only the score variable, so we need the column zero
+                # False for switching turns while we're doing the recursive calls
+                new_score = self.alphabeta(game_state_successor, depth - 1, alpha, beta, False)[0]
+
+                if new_score > best_score:
+                    best_score = new_score
                     best_action = action
-                alpha = max(alpha, best_value)
+                # Changes need to be done for this algorithm
+                alpha = max(alpha, best_score)
                 if beta <= alpha:
                     break
-                    # Return the best value and action for the current player
-            return best_value, best_action
 
+            # First colum will be the score, the second is the column we will put the piece
+            return best_score, best_action
 
+        # The same as explained in "if maximizing_player:" just the opposite
         else:
-            best_value = np.inf
-            # Iterate through the legal actions for the current player
-            for action in gameState.getLegalActions(self.index):
-                # Generate the successor game state and get its value
-                successorGameState = gameState.generateSuccessor(self.index, action)
-                value = self.alphabeta(successorGameState, depth - 1, alpha, beta, not maximizing_player)[0]
-                if value < best_value:
-                    best_value = value
+            best_score = math.inf
+            for action in legal_actions:
+                game_state_successor = gameState.generateSuccessor(self.index, action)
+                value = self.alphabeta(game_state_successor, depth - 1, alpha, beta, True)[0]
+                if value < best_score:
+                    best_score = value
                     best_action = action
-                beta = min(beta, best_value)
+                # changes need to be done for this algorithm
+                beta = min(beta, best_score)
                 if beta <= alpha:
                     break
-                    # Return the best value and action for the current player
-            return best_value, best_action
 
-
-
-
-
-
-
-
-
-
-
-
-
+            return best_score, best_action
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
@@ -276,54 +211,53 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         Returns the expectimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        # Call the expectimax function with the initial game state, the desired depth, and a boolean indicating
-        # whether the current player is the maximizing player or the minimizing player
         gameState.switch_turn(gameState.turn)
-        _, action = self.expectimax(gameState, self.depth, True)
-        return action
+        # Calling to the expectimax function and getting the preferred column for our move.
+        # Initialized the variables ( True for the AI, False for the Player)
+        _, best_action = self.expectimax(gameState, self.depth, True)
+        return best_action
 
+    # Implementing the expectimax algorithm
+    def expectimax(self, gameState, depth, maximizing_player):
 
-    def expectimax(self, gameState, depth, maximizingPlayer):
-        """
-        The expectimax function that implements the expectimax search algorithm.
-        """
         gameState.switch_turn(gameState.turn)
+        # Initialized the variable
         best_action = None
-        # If the game state is terminal or the depth has been reached, return the value of the terminal state
-        if gameState.is_terminal() or depth == 0:
+        # We go over all the actions and taking just the legal actions possible
+        # Meaning taking the columns we can drop the piece (legal_actions will be list of possible columns)
+        # Will make the code more readable
+        legal_actions = gameState.getLegalActions(self.index)
+
+        # Terminal state is when someone won\lost or when there is no legal actions to take
+        # depth 0 we finished the calls
+        # return the state ( we also need to return none cuz we are dealing with 2d structure)
+        if depth == 0 or gameState.is_terminal():
             return self.evaluationFunction(gameState), None
 
-        # Initialize variables to store the best value and action for the current player
-        #best_value =np.NINF if maximizingPlayer else np.inf
-
-
-        # Get the legal actions for the current player
-        #legalActions = gameState.getLegalActions(self.index)
-
         # If the current player is the maximizing player, iterate through the legal actions and update the best value and action if necessary
-        if maximizingPlayer:
-            best_value = np.NINF
-            for action in gameState.getLegalActions(self.index):
+        if maximizing_player:
+            best_score = -math.inf
+            for action in legal_actions:
                 # Generate the successor game state and get its value
-                successorGameState = gameState.generateSuccessor(self.index, action)
-                value = self.expectimax(successorGameState, depth - 1, False)[0]
-                if value > best_value:
-                    best_value = value
+                game_state_successor = gameState.generateSuccessor(self.index, action)
+                score = self.expectimax(game_state_successor, depth - 1, False)[0]
+                if score > best_score:
+                    best_score = score
                     best_action = action
-            return best_value, best_action
+            return best_score, best_action
 
         # If the current player is the minimizing player, compute the expected value of the legal actions
         else:
             # Initialize a variable to store the sum of the values of the legal actions
-            value_sum = 0
+            sum_score = 0
             # Iterate through the legal actions and add their values to the value sum
-            for action in gameState.getLegalActions(self.index):
+            for action in legal_actions:
                 # Generate the successor game state and get its value
-                successorGameState = gameState.generateSuccessor(self.index, action)
-                value = self.expectimax(successorGameState, depth - 1, True)[0]
-                value_sum += value
+                game_state_successor = gameState.generateSuccessor(self.index, action)
+                score = self.expectimax(game_state_successor, depth - 1, True)[0]
+                sum_score += score
             # Compute the expected value by dividing the value sum by the number of legal actions
-            expectedValue = value_sum / len(gameState.getLegalActions(self.index))
-            best_value = expectedValue
+            expected_score = sum_score / len(legal_actions)
+            best_score = expected_score
             # Return the best value and action for the current player
-            return best_value, best_action
+            return best_score, best_action
